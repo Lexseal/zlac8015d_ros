@@ -1,0 +1,3 @@
+[submodule "ZLAC8015D_python"]
+	path = ZLAC8015D_python
+	url = git@github.com:rasheeddo/ZLAC8015D_python.git
