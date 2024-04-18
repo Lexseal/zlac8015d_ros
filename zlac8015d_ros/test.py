@@ -2,7 +2,14 @@ import time
 
 from zlac8015d import ZLAC8015D
 
-motors = ZLAC8015D.Controller(port="/dev/ttyUSB0")
+# from pymodbus.client import ModbusSerialClient
+# import logging
+# FORMAT = ('%(asctime)-15s %(levelname)-8s %(module)-15s:%(lineno)-8s %(message)s')
+# logging.basicConfig(format=FORMAT)
+# log = logging.getLogger()
+# log.setLevel(logging.DEBUG)
+
+motors = ZLAC8015D.Controller()
 
 motors.disable_motor()
 
@@ -22,10 +29,10 @@ for i in range(100):
         start_time = time.time()
         result = motors.set_rpm(cmds[0], cmds[1])
         end_time = time.time()
-        # rpmL, rpmR = motors.get_rpm()
+        rpmL, rpmR = motors.get_rpm()
 
-        # print("period: {:.4f} rpmL: {:.1f} | rpmR: {:.1f}".format(period, rpmL, rpmR))
-        # period = time.time() - last_time
+        print("period: {:.4f} rpmL: {:.1f} | rpmR: {:.1f}".format(period, rpmL, rpmR))
+        period = time.time() - last_time
         time.sleep(0.1)
 
     except KeyboardInterrupt:
