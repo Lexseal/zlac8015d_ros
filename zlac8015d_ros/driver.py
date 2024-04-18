@@ -1,3 +1,5 @@
+from time import sleep
+
 import numpy as np
 import rclpy
 import transforms3d as t3d
@@ -125,13 +127,20 @@ class Driver(Node):
         self.tf.transform.rotation.z = quat[3]
         self.transform_broadcaster.sendTransform(self.tf)
 
+    def destroy_node(self):
+        self.motors.disable_motor()
+        sleep(1)  # wait for the motors to stop
+        return super().destroy_node()
+
 
 def main(args=None):
     rclpy.init(args=args)
     driver = Driver()
-    rclpy.spin(driver)
-    driver.destroy_node()
-    rclpy.shutdown()
+    try:
+        rclpy.spin(driver)
+    except KeyboardInterrupt:
+        driver.destroy_node()
+        rclpy.shutdown()
 
 
 if __name__ == "__main__":
