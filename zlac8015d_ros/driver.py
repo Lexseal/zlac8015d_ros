@@ -62,12 +62,17 @@ class Driver(Node):
         self.odom_msg.pose = self.pose_with_covariance
 
         self.odom_calc_timer = self.create_timer(1 / 60, self.odom_calc_callback)
-        self.odom_pub_timer = self.create_timer(1 / 10, self.odom_pub_callback)
+        self.tf_pub_timer = self.create_timer(1 / 10, self.tf_pub_callback)
 
         self.transform_broadcaster = TransformBroadcaster(self)
-        self.tf = TransformStamped()
-        self.tf.header.frame_id = "odom"
-        self.tf.child_frame_id = "base_link"
+        self.tf_odom = TransformStamped()
+        self.tf_odom.header.frame_id = "odom"
+        self.tf_odom.child_frame_id = "base_link"
+        self.tf_footprint = TransformStamped()
+        self.tf_footprint.header.frame_id = "base_link"
+        self.tf_footprint.child_frame_id = "footprint"
+        # constant transform of -3cm in z
+        self.tf_footprint.transform.translation.z = -0.03
 
     def cmd_vel_callback(self, msg):
         # Update the last received command velocity time
@@ -110,22 +115,22 @@ class Driver(Node):
 
         self.last_odom_time = cur_time
 
-    def odom_pub_callback(self):
+    def tf_pub_callback(self):
         self.odom_pub.publish(self.odom_msg)
 
-        self.tf.header.stamp = self.odom_msg.header.stamp
-        self.tf.transform.translation.x = self.pose_with_covariance.pose.position.x
-        self.tf.transform.translation.y = self.pose_with_covariance.pose.position.y
+        self.tf_odom.header.stamp = self.odom_msg.header.stamp
+        self.tf_odom.transform.translation.x = self.pose_with_covariance.pose.position.x
+        self.tf_odom.transform.translation.y = self.pose_with_covariance.pose.position.y
         quat = t3d.euler.euler2quat(
             self.pose_with_covariance.pose.orientation.x,
             self.pose_with_covariance.pose.orientation.y,
             self.pose_with_covariance.pose.orientation.z,
         )
-        self.tf.transform.rotation.w = quat[0]
-        self.tf.transform.rotation.x = quat[1]
-        self.tf.transform.rotation.y = quat[2]
-        self.tf.transform.rotation.z = quat[3]
-        self.transform_broadcaster.sendTransform(self.tf)
+        self.tf_odom.transform.rotation.w = quat[0]
+        self.tf_odom.transform.rotation.x = quat[1]
+        self.tf_odom.transform.rotation.y = quat[2]
+        self.tf_odom.transform.rotation.z = quat[3]
+        self.transform_broadcaster.sendTransform([self.tf_odom, self.tf_footprint])
 
     def destroy_node(self):
         self.motors.disable_motor()
