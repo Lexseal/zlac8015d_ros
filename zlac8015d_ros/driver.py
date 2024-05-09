@@ -11,7 +11,7 @@ from geometry_msgs.msg import (
 )
 from nav_msgs.msg import Odometry
 from rclpy.node import Node
-from tf2_ros import TransformBroadcaster
+from tf2_ros import TransformBroadcaster, StaticTransformBroadcaster
 from zlac8015d import ZLAC8015D
 
 
@@ -65,6 +65,7 @@ class Driver(Node):
         self.tf_pub_timer = self.create_timer(1 / 10, self.tf_pub_callback)
 
         self.transform_broadcaster = TransformBroadcaster(self)
+        self.static_broadcaster = StaticTransformBroadcaster(self)
         self.tf_odom = TransformStamped()
         self.tf_odom.header.frame_id = "odom"
         self.tf_odom.child_frame_id = "base_link"
@@ -131,9 +132,8 @@ class Driver(Node):
         self.tf_odom.transform.rotation.y = quat[2]
         self.tf_odom.transform.rotation.z = quat[3]
 
-        self.tf_footprint.header.stamp = self.tf_odom.header.stamp  # so that time is not stale
-
-        self.transform_broadcaster.sendTransform([self.tf_odom, self.tf_footprint])
+        self.transform_broadcaster.sendTransform(self.tf_odom)
+        self.static_broadcaster.sendTransform(self.tf_footprint)
 
     def destroy_node(self):
         self.motors.disable_motor()
