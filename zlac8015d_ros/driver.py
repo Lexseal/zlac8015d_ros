@@ -70,7 +70,7 @@ class Driver(Node):
         self.tf_odom.child_frame_id = "base_link"
         self.tf_footprint = TransformStamped()
         self.tf_footprint.header.frame_id = "base_link"
-        self.tf_footprint.child_frame_id = "footprint"
+        self.tf_footprint.child_frame_id = "base_footprint"
         # constant transform of -3cm in z
         self.tf_footprint.transform.translation.z = -0.03
 
