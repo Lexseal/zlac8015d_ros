@@ -130,6 +130,9 @@ class Driver(Node):
         self.tf_odom.transform.rotation.x = quat[1]
         self.tf_odom.transform.rotation.y = quat[2]
         self.tf_odom.transform.rotation.z = quat[3]
+
+        self.tf_footprint.header.stamp = self.tf_odom.header.stamp  # so that time is not stale
+
         self.transform_broadcaster.sendTransform([self.tf_odom, self.tf_footprint])
 
     def destroy_node(self):
