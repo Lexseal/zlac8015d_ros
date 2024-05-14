@@ -75,6 +75,8 @@ class Driver(Node):
         # constant transform of -3cm in z
         self.tf_footprint.transform.translation.z = -0.03
 
+        self.cur_x, self.cur_y, self.cur_z = 0, 0, 0
+
     def cmd_vel_callback(self, msg):
         # Update the last received command velocity time
         self.last_cmd_vel_time = self.get_clock().now()
@@ -107,31 +109,29 @@ class Driver(Node):
         self.twist_with_covariance.twist.angular.z = omega
 
         dt = (cur_time - self.last_odom_time).nanoseconds / 1e9
-        cur_heading = self.pose_with_covariance.pose.orientation.z
-        dx = avg_speed * np.cos(cur_heading) * dt
-        dy = avg_speed * np.sin(cur_heading) * dt
-        self.pose_with_covariance.pose.position.x += dx
-        self.pose_with_covariance.pose.position.y += dy
-        self.pose_with_covariance.pose.orientation.z += omega * dt
+        dx = avg_speed * np.cos(self.cur_z) * dt
+        dy = avg_speed * np.sin(self.cur_z) * dt
+        self.cur_x += dx
+        self.cur_y += dy
+        self.cur_z += omega * dt
 
         self.last_odom_time = cur_time
 
     def tf_pub_callback(self):
-        self.odom_pub.publish(self.odom_msg)
+        self.pose_with_covariance.pose.position.x = self.cur_x
+        self.pose_with_covariance.pose.position.y = self.cur_y
+        q = t3d.euler.euler2quat(0, 0, self.cur_z)
+        self.pose_with_covariance.pose.orientation.w = q[0]
+        self.pose_with_covariance.pose.orientation.x = q[1]
+        self.pose_with_covariance.pose.orientation.y = q[2]
+        self.pose_with_covariance.pose.orientation.z = q[3]
 
         self.tf_odom.header.stamp = self.odom_msg.header.stamp
         self.tf_odom.transform.translation.x = self.pose_with_covariance.pose.position.x
         self.tf_odom.transform.translation.y = self.pose_with_covariance.pose.position.y
-        quat = t3d.euler.euler2quat(
-            self.pose_with_covariance.pose.orientation.x,
-            self.pose_with_covariance.pose.orientation.y,
-            self.pose_with_covariance.pose.orientation.z,
-        )
-        self.tf_odom.transform.rotation.w = quat[0]
-        self.tf_odom.transform.rotation.x = quat[1]
-        self.tf_odom.transform.rotation.y = quat[2]
-        self.tf_odom.transform.rotation.z = quat[3]
+        self.tf_odom.transform.rotation = self.pose_with_covariance.pose.orientation
 
+        self.odom_pub.publish(self.odom_msg)
         self.transform_broadcaster.sendTransform(self.tf_odom)
         self.static_broadcaster.sendTransform(self.tf_footprint)
 
