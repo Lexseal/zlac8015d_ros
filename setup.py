@@ -11,7 +11,7 @@ setup(
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
     ],
-    install_requires=['setuptools', 'transforms3d'],
+    install_requires=['setuptools', 'transforms3d', 'numpy'],
     zip_safe=True,
     maintainer='xinsonglin',
     maintainer_email='zhongjiezhex12@me.com',

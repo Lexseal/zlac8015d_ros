@@ -39,8 +39,8 @@ class Driver(Node):
 
         self.motors.disable_motor()
 
-        self.motors.set_accel_time(1000, 1000)
-        self.motors.set_decel_time(500, 500)
+        self.motors.set_accel_time(100, 100)
+        self.motors.set_decel_time(50, 50)
 
         # if MODE == 1: print("Set relative position control")
         # elif MODE == 2: print("Set absolute position control")
@@ -62,7 +62,7 @@ class Driver(Node):
         self.odom_msg.pose = self.pose_with_covariance
 
         self.odom_calc_timer = self.create_timer(1 / 60, self.odom_calc_callback)
-        self.tf_pub_timer = self.create_timer(1 / 10, self.tf_pub_callback)
+        self.tf_pub_timer = self.create_timer(1 / 30, self.tf_pub_callback)
 
         self.transform_broadcaster = TransformBroadcaster(self)
         self.static_broadcaster = StaticTransformBroadcaster(self)
