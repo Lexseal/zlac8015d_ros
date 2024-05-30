@@ -1,4 +1,5 @@
 from time import sleep
+import sys
 
 import numpy as np
 import rclpy
@@ -35,7 +36,8 @@ class Driver(Node):
         self.left_right_cmd_speed = np.zeros(2)
         self.robot_radius = 0.165
 
-        self.motors = ZLAC8015D.Controller()
+        port = "/dev/ttyUSB0" if len(sys.argv) < 2 else sys.argv[1]
+        self.motors = ZLAC8015D.Controller(port=port)
 
         self.motors.disable_motor()
 
