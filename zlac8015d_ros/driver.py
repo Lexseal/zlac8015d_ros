@@ -10,7 +10,8 @@ from geometry_msgs.msg import (
     Twist,
     TwistWithCovariance,
 )
-from nav_msgs.msg import Odometry, Imu
+from sensor_msgs.msg import Imu
+from nav_msgs.msg import Odometry
 from rclpy.node import Node
 from tf2_ros import TransformBroadcaster, StaticTransformBroadcaster
 from zlac8015d import ZLAC8015D
@@ -117,19 +118,33 @@ class Driver(Node):
         left_speed *= self.motor_polarity[0]
         right_speed *= self.motor_polarity[1]
         
-        R = self.robot_radius * (left_speed + right_speed) / (right_speed - left_speed)
-        omega = (right_speed - left_speed) / (2*self.robot_radius)
-        ICC = self.cur_x - R*np.sin(self.cur_z), self.cur_y + R*np.cos(self.cur_z)
-        Mat = np.array([[np.cos(omega*dt), -np.sin(omega*dt), 0],
-                        [np.sin(omega*dt), np.cos(omega*dt), 0],
-                        [0, 0, 1]])
-        new_pose = Mat @ np.array([self.cur_x - ICC[0], self.cur_y - ICC[1], self.cur_z]) + np.array([ICC[0], ICC[1], omega*dt])
-        self.cur_x, self.cur_y, self.cur_z = new_pose
+        # this is theoretically more accurate but in practice it's worse
+        # if abs(right_speed - left_speed) < 1e-6:
+        #     R = 1e9
+        # else:
+        #     R = self.robot_radius * (left_speed + right_speed) / (right_speed - left_speed)
+        # omega = (right_speed - left_speed) / (2*self.robot_radius)
+        # ICC = self.cur_x - R*np.sin(self.cur_z), self.cur_y + R*np.cos(self.cur_z)
+        # Mat = np.array([[np.cos(omega*dt), -np.sin(omega*dt), 0],
+        #                 [np.sin(omega*dt), np.cos(omega*dt), 0],
+        #                 [0, 0, 1]])
+        # new_pose = Mat @ np.array([self.cur_x - ICC[0], self.cur_y - ICC[1], self.cur_z]) + np.array([ICC[0], ICC[1], omega*dt])
+        # self.cur_x, self.cur_y, self.cur_z = new_pose
+
+        omega = (right_speed - left_speed) / (2 * self.robot_radius)
+        cur_speed = (right_speed + left_speed) / 2
+        dx = cur_speed * np.cos(self.cur_z) * dt
+        dy = cur_speed * np.sin(self.cur_z) * dt
+        self.cur_x += dx
+        self.cur_y += dy
+        self.cur_z += omega * dt
+
+        self.twist_with_covariance.twist.linear.x = cur_speed
+        self.twist_with_covariance.twist.angular.z = omega
         
         self.imu_msg.header.stamp = cur_time.to_msg()
         # angular velocity only in z direction
         self.imu_msg.angular_velocity.z = omega
-        cur_speed = (right_speed + left_speed) / 2
         self.imu_msg.linear_acceleration.x = (cur_speed - self.last_speed) / dt
         self.last_speed = cur_speed
         self.imu_pub.publish(self.imu_msg)
