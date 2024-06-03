@@ -43,8 +43,8 @@ class Driver(Node):
 
         self.motors.disable_motor()
 
-        self.motors.set_accel_time(100, 100)
-        self.motors.set_decel_time(50, 50)
+        self.motors.set_accel_time(200, 200)
+        self.motors.set_decel_time(100, 100)
 
         # if MODE == 1: print("Set relative position control")
         # elif MODE == 2: print("Set absolute position control")
